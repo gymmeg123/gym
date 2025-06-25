@@ -185,7 +185,7 @@ export default function GymManagement() {
 
   // Delete member from Firestore
   const deleteMember = async (memberId: string, memberName: string) => {
-    if (window.confirm(`Are you sure you want to delete ${memberName}? This action cannot be undone.`)) {
+    if (typeof window !== "undefined" && window.confirm(`Are you sure you want to delete ${memberName}? This action cannot be undone.`)) {
       try {
         await deleteDoc(doc(db, "members", memberId))
         toast({
@@ -206,6 +206,7 @@ export default function GymManagement() {
 
   // Renew member in Firestore
   const renewMember = async (memberId: string, memberName: string, currentExpiryDate: string) => {
+    if (typeof window === "undefined") return
     const startDatePrompt = window.prompt(
       `Renew membership for ${memberName}\n\nEnter start date (DD/MM/YYYY):\n(Leave blank to use default logic)`,
       "",
@@ -342,6 +343,7 @@ export default function GymManagement() {
 
   // Export and import CSV remain unchanged (they only affect UI, not Firestore)
   const exportMembersToCSV = () => {
+    if (typeof window === "undefined" || typeof document === "undefined") return
     let csv = "ID,Name,Mobile,Join Date,Membership Type,Price,Expiry Date,Status\n"
     members.forEach((member) => {
       const status = getMemberStatus(member.expiryDate)
@@ -650,7 +652,11 @@ export default function GymManagement() {
                         variant="outline"
                         size="sm"
                         className="border-yellow-400/50 text-yellow-300 hover:bg-yellow-400/20"
-                        onClick={() => document.getElementById("csv-upload")?.click()}
+                        onClick={() => {
+                          if (typeof document !== "undefined") {
+                            document.getElementById("csv-upload")?.click()
+                          }
+                        }}
                       >
                         Import CSV
                       </Button>
