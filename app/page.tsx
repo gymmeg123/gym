@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -207,72 +206,78 @@ export default function GymManagement() {
   // Renew member in Firestore
   const renewMember = async (memberId: string, memberName: string, currentExpiryDate: string) => {
     if (typeof window === "undefined") return
-    const startDatePrompt = window.prompt(
-      `Renew membership for ${memberName}\n\nEnter start date (DD/MM/YYYY):\n(Leave blank to use default logic)`,
-      "",
-    )
     let startDate: Date
-    if (startDatePrompt && startDatePrompt.trim() !== "") {
-      const dateParts = startDatePrompt.split("/")
-      if (dateParts.length === 3) {
-        const day = Number.parseInt(dateParts[0])
-        const month = Number.parseInt(dateParts[1]) - 1
-        const year = Number.parseInt(dateParts[2])
-        startDate = new Date(year, month, day)
-        if (isNaN(startDate.getTime())) {
-          alert("Invalid date. Please enter date in DD/MM/YYYY format.")
+    let startDatePrompt: string | null = null
+    let selectedPlan: string | null = null
+    let pricePrompt: string | null = null
+
+    if (typeof window !== "undefined") {
+      startDatePrompt = window.prompt(
+        `Renew membership for ${memberName}\n\nEnter start date (DD/MM/YYYY):\n(Leave blank to use default logic)`,
+        "",
+      )
+      if (startDatePrompt && startDatePrompt.trim() !== "") {
+        const dateParts = startDatePrompt.split("/")
+        if (dateParts.length === 3) {
+          const day = Number.parseInt(dateParts[0])
+          const month = Number.parseInt(dateParts[1]) - 1
+          const year = Number.parseInt(dateParts[2])
+          startDate = new Date(year, month, day)
+          if (isNaN(startDate.getTime())) {
+            window.alert("Invalid date. Please enter date in DD/MM/YYYY format.")
+            return
+          }
+        } else {
+          window.alert("Invalid date format. Please use DD/MM/YYYY format.")
           return
         }
       } else {
-        alert("Invalid date format. Please use DD/MM/YYYY format.")
-        return
+        const today = new Date()
+        const currentExpiry = new Date(currentExpiryDate)
+        startDate = currentExpiry > today ? currentExpiry : today
       }
-    } else {
-      const today = new Date()
-      const currentExpiry = new Date(currentExpiryDate)
-      startDate = currentExpiry > today ? currentExpiry : today
-    }
-    const selectedPlan = window.prompt(
-      `Renew membership for ${memberName}\n\nSelect duration:\n1. 1 Month\n2. 3 Months\n3. 6 Months\n4. 12 Months\n\nEnter plan number (1-4):`,
-    )
-    if (selectedPlan && ["1", "2", "3", "4"].includes(selectedPlan)) {
-      const planValues = ["1", "3", "6", "12"]
-      const planLabels = ["1 Month", "3 Months", "6 Months", "12 Months"]
-      const planIndex = Number.parseInt(selectedPlan) - 1
-      const selectedValue = planValues[planIndex]
-      const selectedLabel = planLabels[planIndex]
-      const pricePrompt = window.prompt(`Enter price for ${selectedLabel} membership:`, "")
-      const price = Number.parseFloat(pricePrompt || "0")
-      if (!price || price <= 0) {
-        alert("Please enter a valid price.")
-        return
-      }
-      if (
-        window.confirm(
-          `Confirm renewal:\n${memberName}\nDuration: ${selectedLabel}\nStart Date: ${format(startDate, "dd/MM/yyyy")}\nAmount: ₹${price}\n\nProceed with renewal?`,
-        )
-      ) {
-        const newExpiryDate = new Date(startDate)
-        newExpiryDate.setMonth(newExpiryDate.getMonth() + Number.parseInt(selectedValue))
-        try {
-          await updateDoc(doc(db, "members", memberId), {
-            membershipType: selectedValue,
-            joinDate: startDate.toISOString().split("T")[0],
-            expiryDate: newExpiryDate.toISOString().split("T")[0],
-            status: getMemberStatus(newExpiryDate.toISOString().split("T")[0]),
-            price: price,
-          })
-          toast({
-            title: "Membership Renewed!",
-            description: `${memberName}'s membership has been renewed for ${selectedLabel} at ₹${price} starting from ${format(startDate, "dd/MM/yyyy")}.`,
-          })
-        } catch (error) {
-          console.error("Error renewing member:", error)
-          toast({
-            title: "Error Renewing Member",
-            description: "There was a problem renewing this member in Firestore.",
-            variant: "destructive",
-          })
+      selectedPlan = window.prompt(
+        `Renew membership for ${memberName}\n\nSelect duration:\n1. 1 Month\n2. 3 Months\n3. 6 Months\n4. 12 Months\n\nEnter plan number (1-4):`,
+      )
+      if (selectedPlan && ["1", "2", "3", "4"].includes(selectedPlan)) {
+        const planValues = ["1", "3", "6", "12"]
+        const planLabels = ["1 Month", "3 Months", "6 Months", "12 Months"]
+        const planIndex = Number.parseInt(selectedPlan) - 1
+        const selectedValue = planValues[planIndex]
+        const selectedLabel = planLabels[planIndex]
+        pricePrompt = window.prompt(`Enter price for ${selectedLabel} membership:`, "")
+        const price = Number.parseFloat(pricePrompt || "0")
+        if (!price || price <= 0) {
+          window.alert("Please enter a valid price.")
+          return
+        }
+        if (
+          window.confirm(
+            `Confirm renewal:\n${memberName}\nDuration: ${selectedLabel}\nStart Date: ${format(startDate, "dd/MM/yyyy")}\nAmount: ₹${price}\n\nProceed with renewal?`,
+          )
+        ) {
+          const newExpiryDate = new Date(startDate)
+          newExpiryDate.setMonth(newExpiryDate.getMonth() + Number.parseInt(selectedValue))
+          try {
+            await updateDoc(doc(db, "members", memberId), {
+              membershipType: selectedValue,
+              joinDate: startDate.toISOString().split("T")[0],
+              expiryDate: newExpiryDate.toISOString().split("T")[0],
+              status: getMemberStatus(newExpiryDate.toISOString().split("T")[0]),
+              price: price,
+            })
+            toast({
+              title: "Membership Renewed!",
+              description: `${memberName}'s membership has been renewed for ${selectedLabel} at ₹${price} starting from ${format(startDate, "dd/MM/yyyy")}.`,
+            })
+          } catch (error) {
+            console.error("Error renewing member:", error)
+            toast({
+              title: "Error Renewing Member",
+              description: "There was a problem renewing this member in Firestore.",
+              variant: "destructive",
+            })
+          }
         }
       }
     }
@@ -351,19 +356,21 @@ export default function GymManagement() {
       const expiryDate = new Date(member.expiryDate).toLocaleDateString("en-GB")
       csv += `${member.id},${member.name},${member.mobile},${joinDate},${getMembershipTypeLabel(member.membershipType)},₹${member.price || 0},${expiryDate},${status}\n`
     })
-    const blob = new Blob([csv], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.setAttribute("hidden", "")
-    a.setAttribute("href", url)
-    a.setAttribute("download", `meg-gym-members-${new Date().toLocaleDateString("en-GB").replace(/\//g, "-")}.csv`)
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    toast({
-      title: "Export Successful",
-      description: `${members.length} members exported to CSV file.`,
-    })
+    if (typeof window !== "undefined" && typeof document !== "undefined") {
+      const blob = new Blob([csv], { type: "text/csv" })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.setAttribute("hidden", "")
+      a.setAttribute("href", url)
+      a.setAttribute("download", `meg-gym-members-${new Date().toLocaleDateString("en-GB").replace(/\//g, "-")}.csv`)
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      toast({
+        title: "Export Successful",
+        description: `${members.length} members exported to CSV file.`,
+      })
+    }
   }
 
   // Import CSV: add each member to Firestore
