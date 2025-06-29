@@ -57,6 +57,7 @@ interface Member {
 }
 
 export default function GymManagement() {
+  const [mounted, setMounted] = useState(false); // Hydration fix
   const [currentTime, setCurrentTime] = useState(new Date())
   const [members, setMembers] = useState<Member[]>([])
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([])
@@ -73,6 +74,11 @@ export default function GymManagement() {
   const { toast } = useToast()
 
   const MEMBERS_PER_PAGE = 10
+
+  // Hydration fix: set mounted true after client mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Update clock every second
   useEffect(() => {
@@ -472,16 +478,19 @@ export default function GymManagement() {
                 </span>
               </div>
             </CardTitle>
-            <div className="space-y-2 text-yellow-100">
-              <div className="flex items-center justify-center gap-2 text-2xl font-mono drop-shadow-lg">
-                <Clock className="h-6 w-6 text-yellow-300" />
-                {formatTime(currentTime)}
+            {/* Hydration fix: Only render clock/date after mount */}
+            {mounted && (
+              <div className="space-y-2 text-yellow-100">
+                <div className="flex items-center justify-center gap-2 text-2xl font-mono drop-shadow-lg">
+                  <Clock className="h-6 w-6 text-yellow-300" />
+                  {formatTime(currentTime)}
+                </div>
+                <div className="flex items-center justify-center gap-2 text-lg drop-shadow-md">
+                  <Calendar className="h-5 w-5 text-yellow-300" />
+                  {formatDate(currentTime)}
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-2 text-lg drop-shadow-md">
-                <Calendar className="h-5 w-5 text-yellow-300" />
-                {formatDate(currentTime)}
-              </div>
-            </div>
+            )}
           </CardHeader>
         </Card>
 
