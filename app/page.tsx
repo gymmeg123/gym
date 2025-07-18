@@ -67,19 +67,25 @@ export default function GymManagement() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     if (loginUser === "admin123" && loginPass === "meg2020") {
-      setIsLoggedIn(true)
-      setLoginError("")
+      setIsLoggedIn(true);
+      setLoginError("");
+      if (typeof window !== "undefined") {
+      localStorage.setItem("isLoggedIn", "true");
+    }
     } else {
       setLoginError("Invalid username or password")
     }
   }
 
   const handleLogout = () => {
-    setIsLoggedIn(false)
-    setLoginUser("")
-    setLoginPass("")
-    setLoginError("")
-    setShowPassword(false)
+    setIsLoggedIn(false);
+    setLoginUser("");
+    setLoginPass("");
+    setLoginError("");
+    setShowPassword(false);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("isLoggedIn");
+    }
   }
 
   // --- REST OF YOUR STATE ---
@@ -104,6 +110,12 @@ export default function GymManagement() {
   // Hydration fix: set mounted true after client mount
   useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      const loggedIn = localStorage.getItem("isLoggedIn");
+      if (loggedIn === "true") {
+        setIsLoggedIn(true);
+      }
+    } 
   }, []);
 
   // Update clock every second
