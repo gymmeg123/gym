@@ -57,6 +57,32 @@ interface Member {
 }
 
 export default function GymManagement() {
+  // --- LOGIN STATE ---
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [loginUser, setLoginUser] = useState("")
+  const [loginPass, setLoginPass] = useState("")
+  const [loginError, setLoginError] = useState("")
+  const [showPassword, setShowPassword] = useState(false) // NEW
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (loginUser === "admin123" && loginPass === "meg2020") {
+      setIsLoggedIn(true)
+      setLoginError("")
+    } else {
+      setLoginError("Invalid username or password")
+    }
+  }
+
+  const handleLogout = () => {
+    setIsLoggedIn(false)
+    setLoginUser("")
+    setLoginPass("")
+    setLoginError("")
+    setShowPassword(false)
+  }
+
+  // --- REST OF YOUR STATE ---
   const [mounted, setMounted] = useState(false); // Hydration fix
   const [currentTime, setCurrentTime] = useState(new Date())
   const [members, setMembers] = useState<Member[]>([])
@@ -435,11 +461,67 @@ export default function GymManagement() {
     reader.readAsText(file)
   }
 
+  // --- LOGIN FORM ---
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900">
+        <form
+          onSubmit={handleLogin}
+          className="bg-gray-900 p-8 rounded shadow-lg border-2 border-yellow-400 flex flex-col gap-4 w-full max-w-xs"
+        >
+          <h2 className="text-2xl font-bold text-yellow-400 text-center mb-2">Login</h2>
+          <input
+            type="text"
+            placeholder="Username"
+            value={loginUser}
+            onChange={e => setLoginUser(e.target.value)}
+            className="p-2 rounded bg-gray-800 border border-yellow-400 text-yellow-100"
+            required
+          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={loginPass}
+              onChange={e => setLoginPass(e.target.value)}
+              className="p-2 rounded bg-gray-800 border border-yellow-400 text-yellow-100 w-full"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-2 top-2 text-yellow-400 text-xs"
+              tabIndex={-1}
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
+          {loginError && <div className="text-red-400 text-sm text-center">{loginError}</div>}
+          <button
+            type="submit"
+            className="bg-yellow-400 text-black font-semibold py-2 rounded hover:bg-yellow-500"
+          >
+            Login
+          </button>
+        </form>
+      </div>
+    )
+  }
+
+  // --- MAIN APP ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 p-4 relative">
       {/* Profile Icon & Login/Logout Dropdown */}
-      <div className="absolute top-4 right-4 z-20">
+      <div className="absolute top-4 right-4 z-20 flex gap-2 items-center">
         <GoogleLogin />
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-yellow-400/50 text-yellow-400 hover:bg-yellow-400 hover:text-black"
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
       </div>
       {/* Background Logo with Opacity */}
       <div className="fixed inset-0 flex items-center justify-center z-0 opacity-5 pointer-events-none">
@@ -532,6 +614,7 @@ export default function GymManagement() {
 
           {/* Add Member Tab */}
           <TabsContent value="add-member">
+            {/* ...rest of your Add Member tab code... */}
             <Card className="bg-gray-900/90 border-yellow-400/50 text-yellow-100 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-yellow-400">
@@ -647,6 +730,7 @@ export default function GymManagement() {
 
           {/* All Members Tab */}
           <TabsContent value="members">
+            {/* ...your All Members tab code... */}
             <Card className="bg-gray-900/90 border-yellow-400/50 text-yellow-100 backdrop-blur-sm">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
